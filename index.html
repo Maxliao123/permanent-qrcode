@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>永久免費 QR Code 生成器</title>
+    <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--primary); }
+
+        .input-group { margin-bottom: 1.5rem; text-align: left; }
+        
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+
+        input[type="color"] {
+            border: none;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            background: none;
+        }
+
+        #canvas {
+            margin: 0 auto 1.5rem auto;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .note {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>永久 QR Code 生成器</h1>
+    
+    <div class="input-group">
+        <label>輸入網址 (URL)</label>
+        <input type="text" id="urlInput" placeholder="https://www.example.com" value="https://www.google.com">
+    </div>
+
+    <div class="input-group">
+        <label>自訂顏色 (點擊更換)</label>
+        <div class="controls">
+            <input type="color" id="colorDots" value="#000000" title="點狀顏色">
+            <input type="color" id="colorBg" value="#ffffff" title="背景顏色">
+        </div>
+    </div>
+
+    <div id="canvas"></div>
+
+    <button id="downloadBtn">下載 QR Code (PNG)</button>
+    
+    <p class="note">此工具生成的 QR Code 為靜態碼，永久有效，不經第三方伺服器。</p>
+</div>
+
+<script type="text/javascript">
+    const qrCode = new QRCodeStyling({
+        width: 300,
+        height: 300,
+        type: "svg",
+        data: "https://www.google.com",
+        image: "", // 如果想要中間有 Logo，可以在這裡填入圖片網址
+        dotsOptions: {
+            color: "#000000",
+            type: "rounded" // 圓潤風格，看起來比傳統方塊高級
+        },
+        backgroundOptions: {
+            color: "#ffffff",
+        },
+        imageOptions: {
+            crossOrigin: "anonymous",
+            margin: 20
+        },
+        cornersSquareOptions: {
+            type: "extra-rounded" // 角落也是圓潤的
+        }
+    });
+
+    qrCode.append(document.getElementById("canvas"));
+
+    const urlInput = document.getElementById("urlInput");
+    const colorDots = document.getElementById("colorDots");
+    const colorBg = document.getElementById("colorBg");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    function updateQR() {
+        qrCode.update({
+            data: urlInput.value,
+            dotsOptions: { color: colorDots.value },
+            backgroundOptions: { color: colorBg.value }
+        });
+    }
+
+    urlInput.addEventListener("keyup", updateQR);
+    colorDots.addEventListener("input", updateQR);
+    colorBg.addEventListener("input", updateQR);
+
+    downloadBtn.addEventListener("click", () => {
+        qrCode.download({ name: "my-qr-code", extension: "png" });
+    });
+</script>
+
+</body>
+</html>
