@@ -169,13 +169,17 @@
     <p class="note">勾選「透明背景」後下載 PNG，即可獲得去背後的 QR Code。</p>
 </div>
 
-<script type="text/javascript">
+
+
+
+    <script type="text/javascript">
+    // 初始化 QR Code
     const qrCode = new QRCodeStyling({
-        width: 300,
-        height: 300,
-        type: "svg", // 預覽用 svg 比較清晰
+        width: 1000, // 下載時解析度拉高一點，這樣印刷才清楚
+        height: 1000,
+        type: "svg", // 預覽時用 svg
         data: "https://memory8.com",
-        image: "", 
+        image: "",
         dotsOptions: {
             color: "#000000",
             type: "rounded"
@@ -192,6 +196,7 @@
         }
     });
 
+    // 讓預覽區顯示 QR Code (預覽時我們不用太高解析度，縮放顯示即可)
     qrCode.append(document.getElementById("canvas"));
 
     const urlInput = document.getElementById("urlInput");
@@ -201,37 +206,72 @@
     const downloadBtn = document.getElementById("downloadBtn");
     const fileExt = document.getElementById("fileExt");
 
+    // 更新函式
     function updateQR() {
-        // 如果勾選透明，背景色設為 null，否則使用選色器的顏色
-        const bgColor = transparentCheck.checked ? null : colorBg.value;
+        // 邏輯：如果勾選透明，預覽時為了讓你看見，我們先用 null (這樣網頁背景才透得出來)
+        // 但下載時我們會另外處理
+        const bgColor = transparentCheck.checked ? "transparent" : colorBg.value;
 
         qrCode.update({
+            width: 300, // 預覽時寬度小一點
+            height: 300,
             data: urlInput.value,
             dotsOptions: { color: colorDots.value },
             backgroundOptions: { color: bgColor }
         });
 
-        // UX 優化：如果勾選透明，禁用背景顏色選擇器，讓用戶知道現在選顏色沒用
+        // UI 狀態更新
         colorBg.disabled = transparentCheck.checked;
         
-        // UX 優化：JPG 不支援透明，如果選了 JPG，自動取消透明勾選
-        if (fileExt.value === 'jpeg' && transparentCheck.checked) {
-             // 這裡不做強制取消，但在下載時會變黑底，通常我們會建議用戶：
-             // 其實可以保持透明邏輯，但在下載 JPG 時，庫會自動補白底或黑底，
-             // 為了避免混淆，最好是在選 JPG 時提醒用戶。
+        // 視覺反饋：如果選透明，把選色器變灰
+        if(transparentCheck.checked) {
+            colorBg.parentElement.style.opacity = "0.5";
+        } else {
+            colorBg.parentElement.style.opacity = "1";
         }
     }
 
+    // 監聽器
     urlInput.addEventListener("keyup", updateQR);
     colorDots.addEventListener("input", updateQR);
     colorBg.addEventListener("input", updateQR);
     transparentCheck.addEventListener("change", updateQR);
+    
+    // 初始化執行一次
+    updateQR();
 
+    // 下載按鈕邏輯 (這裡最重要)
     downloadBtn.addEventListener("click", () => {
         const ext = fileExt.value;
-        qrCode.download({ name: "my-qr-code", extension: ext });
+        
+        // 1. 先把解析度拉高到 2000x2000 (保證印刷清晰)
+        const downloadOptions = {
+            width: 2000,
+            height: 2000,
+            data: urlInput.value,
+            dotsOptions: { color: colorDots.value },
+            backgroundOptions: { 
+                // 關鍵修正：如果是透明，明確寫 "transparent"，否則用選的顏色
+                color: transparentCheck.checked ? "transparent" : colorBg.value 
+            }
+        };
+
+        qrCode.update(downloadOptions);
+
+        // 2. 下載
+        qrCode.download({ name: "my-qr-code", extension: ext }).then(() => {
+            // 3. 下載完後，把解析度改回 300 給網頁預覽用，不然網頁會變很慢
+            setTimeout(() => {
+                qrCode.update({
+                    width: 300,
+                    height: 300,
+                    backgroundOptions: { 
+                         color: transparentCheck.checked ? "transparent" : colorBg.value 
+                    }
+                });
+            }, 100);
+        });
     });
 </script>
-
 </body>
 </html>
