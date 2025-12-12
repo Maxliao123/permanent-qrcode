@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>永久免費 QR Code 生成器 (專業版)</title>
+    <title>永久免費 QR Code 生成器 (大師版 V1.7)</title>
     <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
     <style>
         :root {
@@ -30,7 +30,7 @@
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 450px; /* 稍微加寬一點以容納新選項 */
+            max-width: 480px;
             text-align: center;
         }
 
@@ -91,13 +91,13 @@
         #canvas {
             margin: 0 auto 1.5rem auto;
             border-radius: 10px;
-            /* 為了在網頁上看得清楚透明背景，給畫布容器加一個棋盤格背景 */
+            /* 棋盤格背景：讓透明度看得見 */
             background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), 
                               linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee);
             background-size: 20px 20px;
             background-position: 0 0, 10px 10px;
-            display: inline-block; /* 讓背景只包住 canvas */
-            padding: 10px; /* 留一點邊距看清楚邊界 */
+            display: inline-block;
+            padding: 10px;
         }
 
         .download-group {
@@ -124,13 +124,14 @@
             margin-top: 1rem;
             font-size: 0.8rem;
             color: #64748b;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>永久 QR Code 生成器 V1.5</h1>
+    <h1>永久 QR Code 生成器 V1.7</h1>
     
     <div class="input-group">
         <label>輸入網址 (URL)</label>
@@ -159,25 +160,26 @@
 
     <div class="input-group download-group">
         <select id="fileExt" style="flex: 1;">
-            <option value="png">PNG (支援透明)</option>
+            <option value="png">PNG (推薦/支援透明)</option>
             <option value="jpeg">JPG (不支援透明)</option>
-            <option value="svg">SVG (向量圖)</option>
+            <option value="svg">SVG (印刷專用/向量檔)</option>
         </select>
         <button id="downloadBtn" style="flex: 2;">下載圖片</button>
     </div>
     
-    <p class="note">勾選「透明背景」後下載 PNG，即可獲得去背後的 QR Code。</p>
+    <p class="note">
+        💡 <b>印刷小撇步：</b><br>
+        一般使用請下載 <b>PNG</b> (已自動優化為高清 2000px)。<br>
+        若廠商要求 AI/EPS 檔，請下載 <b>SVG</b> 即可通用。
+    </p>
 </div>
 
-
-
-
-    <script type="text/javascript">
+<script type="text/javascript">
     // 初始化 QR Code
     const qrCode = new QRCodeStyling({
-        width: 1000, // 下載時解析度拉高一點，這樣印刷才清楚
-        height: 1000,
-        type: "svg", // 預覽時用 svg
+        width: 300,  // 初始預覽寬度
+        height: 300, // 初始預覽高度
+        type: "svg", // 核心使用 SVG 渲染，最清晰
         data: "https://memory8.com",
         image: "",
         dotsOptions: {
@@ -196,7 +198,7 @@
         }
     });
 
-    // 讓預覽區顯示 QR Code (預覽時我們不用太高解析度，縮放顯示即可)
+    // 將 QR Code 掛載到網頁上
     qrCode.append(document.getElementById("canvas"));
 
     const urlInput = document.getElementById("urlInput");
@@ -206,24 +208,21 @@
     const downloadBtn = document.getElementById("downloadBtn");
     const fileExt = document.getElementById("fileExt");
 
-    // 更新函式
+    // 更新預覽函式
     function updateQR() {
-        // 邏輯：如果勾選透明，預覽時為了讓你看見，我們先用 null (這樣網頁背景才透得出來)
-        // 但下載時我們會另外處理
+        // 如果勾選透明，背景色設為 "transparent"，否則用選色器的顏色
         const bgColor = transparentCheck.checked ? "transparent" : colorBg.value;
 
         qrCode.update({
-            width: 300, // 預覽時寬度小一點
+            width: 300,
             height: 300,
             data: urlInput.value,
             dotsOptions: { color: colorDots.value },
             backgroundOptions: { color: bgColor }
         });
 
-        // UI 狀態更新
+        // UI 狀態更新：勾選透明時，禁用背景色選擇器
         colorBg.disabled = transparentCheck.checked;
-        
-        // 視覺反饋：如果選透明，把選色器變灰
         if(transparentCheck.checked) {
             colorBg.parentElement.style.opacity = "0.5";
         } else {
@@ -240,38 +239,45 @@
     // 初始化執行一次
     updateQR();
 
-    // 下載按鈕邏輯 (這裡最重要)
+    // 下載按鈕邏輯 (核心技術點)
     downloadBtn.addEventListener("click", () => {
         const ext = fileExt.value;
-        
-        // 1. 先把解析度拉高到 2000x2000 (保證印刷清晰)
-        const downloadOptions = {
-            width: 2000,
-            height: 2000,
-            data: urlInput.value,
-            dotsOptions: { color: colorDots.value },
-            backgroundOptions: { 
-                // 關鍵修正：如果是透明，明確寫 "transparent"，否則用選的顏色
-                color: transparentCheck.checked ? "transparent" : colorBg.value 
-            }
-        };
+        const bgColor = transparentCheck.checked ? "transparent" : colorBg.value;
 
-        qrCode.update(downloadOptions);
+        // 策略分流：
+        if (ext === 'svg') {
+            // 策略 A: 向量圖 (SVG)
+            // 不需要調高解析度，因為向量圖無限放大都清晰
+            // 只要確保背景顏色設定正確即可
+            qrCode.update({
+                backgroundOptions: { color: bgColor }
+            });
+            qrCode.download({ name: "my-qr-code", extension: "svg" });
+            
+        } else {
+            // 策略 B: 點陣圖 (PNG / JPG)
+            // 為了印刷清楚，我們強制把解析度拉高到 2000x2000
+            qrCode.update({
+                width: 2000, 
+                height: 2000,
+                backgroundOptions: { color: bgColor }
+            });
 
-        // 2. 下載
-        qrCode.download({ name: "my-qr-code", extension: ext }).then(() => {
-            // 3. 下載完後，把解析度改回 300 給網頁預覽用，不然網頁會變很慢
-            setTimeout(() => {
-                qrCode.update({
-                    width: 300,
-                    height: 300,
-                    backgroundOptions: { 
-                         color: transparentCheck.checked ? "transparent" : colorBg.value 
-                    }
-                });
-            }, 100);
-        });
+            // 下載
+            qrCode.download({ name: "my-qr-code", extension: ext }).then(() => {
+                // 下載完成後，為了不讓網頁上的預覽圖變得巨大，
+                // 我們延遲 100ms 把解析度改回 300
+                setTimeout(() => {
+                    qrCode.update({
+                        width: 300,
+                        height: 300,
+                        backgroundOptions: { color: bgColor }
+                    });
+                }, 100);
+            });
+        }
     });
 </script>
+
 </body>
 </html>
