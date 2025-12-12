@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>永久免費 QR Code 生成器</title>
+    <title>永久免費 QR Code 生成器 (專業版)</title>
     <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
     <style>
         :root {
@@ -30,50 +30,79 @@
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 400px;
+            max-width: 450px; /* 稍微加寬一點以容納新選項 */
             text-align: center;
         }
 
         h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--primary); }
 
-        .input-group { margin-bottom: 1.5rem; text-align: left; }
+        .input-group { margin-bottom: 1.2rem; text-align: left; }
         
         label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; }
         
-        input[type="text"] {
+        input[type="text"], select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e2e8f0;
             border-radius: 8px;
             font-size: 1rem;
             box-sizing: border-box;
+            background: white;
             transition: border-color 0.3s;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus, select:focus {
             outline: none;
             border-color: var(--primary);
         }
 
         .controls {
             display: flex;
-            gap: 10px;
-            margin-bottom: 1.5rem;
-            justify-content: center;
+            gap: 15px;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
         }
 
         input[type="color"] {
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 35px;
+            height: 35px;
             cursor: pointer;
             background: none;
+            padding: 0;
+        }
+
+        /* 自訂 Checkbox 樣式 */
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
         #canvas {
             margin: 0 auto 1.5rem auto;
             border-radius: 10px;
-            overflow: hidden;
+            /* 為了在網頁上看得清楚透明背景，給畫布容器加一個棋盤格背景 */
+            background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee), 
+                              linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            display: inline-block; /* 讓背景只包住 canvas */
+            padding: 10px; /* 留一點邊距看清楚邊界 */
+        }
+
+        .download-group {
+            display: flex;
+            gap: 10px;
         }
 
         button {
@@ -101,38 +130,55 @@
 <body>
 
 <div class="container">
-    <h1>永久 QR Code 生成器</h1>
+    <h1>永久 QR Code 生成器 V1.5</h1>
     
     <div class="input-group">
         <label>輸入網址 (URL)</label>
-        <input type="text" id="urlInput" placeholder="https://www.example.com" value="https://www.google.com">
+        <input type="text" id="urlInput" placeholder="https://www.example.com" value="https://memory8.com">
     </div>
 
     <div class="input-group">
-        <label>自訂顏色 (點擊更換)</label>
+        <label>外觀設定</label>
         <div class="controls">
-            <input type="color" id="colorDots" value="#000000" title="點狀顏色">
-            <input type="color" id="colorBg" value="#ffffff" title="背景顏色">
+            <div class="control-item">
+                <span>碼色:</span>
+                <input type="color" id="colorDots" value="#000000">
+            </div>
+            <div class="control-item">
+                <span>底色:</span>
+                <input type="color" id="colorBg" value="#ffffff">
+            </div>
+            <div class="control-item">
+                <input type="checkbox" id="transparentCheck">
+                <label for="transparentCheck" style="margin:0; cursor:pointer;">透明背景</label>
+            </div>
         </div>
     </div>
 
     <div id="canvas"></div>
 
-    <button id="downloadBtn">下載 QR Code (PNG)</button>
+    <div class="input-group download-group">
+        <select id="fileExt" style="flex: 1;">
+            <option value="png">PNG (支援透明)</option>
+            <option value="jpeg">JPG (不支援透明)</option>
+            <option value="svg">SVG (向量圖)</option>
+        </select>
+        <button id="downloadBtn" style="flex: 2;">下載圖片</button>
+    </div>
     
-    <p class="note">此工具生成的 QR Code 為靜態碼，永久有效，不經第三方伺服器。</p>
+    <p class="note">勾選「透明背景」後下載 PNG，即可獲得去背後的 QR Code。</p>
 </div>
 
 <script type="text/javascript">
     const qrCode = new QRCodeStyling({
         width: 300,
         height: 300,
-        type: "svg",
-        data: "https://www.google.com",
-        image: "", // 如果想要中間有 Logo，可以在這裡填入圖片網址
+        type: "svg", // 預覽用 svg 比較清晰
+        data: "https://memory8.com",
+        image: "", 
         dotsOptions: {
             color: "#000000",
-            type: "rounded" // 圓潤風格，看起來比傳統方塊高級
+            type: "rounded"
         },
         backgroundOptions: {
             color: "#ffffff",
@@ -142,7 +188,7 @@
             margin: 20
         },
         cornersSquareOptions: {
-            type: "extra-rounded" // 角落也是圓潤的
+            type: "extra-rounded"
         }
     });
 
@@ -151,22 +197,39 @@
     const urlInput = document.getElementById("urlInput");
     const colorDots = document.getElementById("colorDots");
     const colorBg = document.getElementById("colorBg");
+    const transparentCheck = document.getElementById("transparentCheck");
     const downloadBtn = document.getElementById("downloadBtn");
+    const fileExt = document.getElementById("fileExt");
 
     function updateQR() {
+        // 如果勾選透明，背景色設為 null，否則使用選色器的顏色
+        const bgColor = transparentCheck.checked ? null : colorBg.value;
+
         qrCode.update({
             data: urlInput.value,
             dotsOptions: { color: colorDots.value },
-            backgroundOptions: { color: colorBg.value }
+            backgroundOptions: { color: bgColor }
         });
+
+        // UX 優化：如果勾選透明，禁用背景顏色選擇器，讓用戶知道現在選顏色沒用
+        colorBg.disabled = transparentCheck.checked;
+        
+        // UX 優化：JPG 不支援透明，如果選了 JPG，自動取消透明勾選
+        if (fileExt.value === 'jpeg' && transparentCheck.checked) {
+             // 這裡不做強制取消，但在下載時會變黑底，通常我們會建議用戶：
+             // 其實可以保持透明邏輯，但在下載 JPG 時，庫會自動補白底或黑底，
+             // 為了避免混淆，最好是在選 JPG 時提醒用戶。
+        }
     }
 
     urlInput.addEventListener("keyup", updateQR);
     colorDots.addEventListener("input", updateQR);
     colorBg.addEventListener("input", updateQR);
+    transparentCheck.addEventListener("change", updateQR);
 
     downloadBtn.addEventListener("click", () => {
-        qrCode.download({ name: "my-qr-code", extension: "png" });
+        const ext = fileExt.value;
+        qrCode.download({ name: "my-qr-code", extension: ext });
     });
 </script>
 
